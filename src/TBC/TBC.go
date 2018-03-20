@@ -15,7 +15,6 @@ type Transaction struct {
 	Sender string //发送者
 	Recver string //接收者
 	Amount string //数量
-	Flag   bool   //挖取标识
 }
 
 //区块链结构体
@@ -47,14 +46,17 @@ func (self *BlockChain) NewBlock(proof int, prevHash []byte) {
 	self.Index++
 	block := &BlockChain{self.Index, time.Now().Unix(), proof, prevHash, self.Datas, self.Chain}
 
+	//Reset the current list of transactions
+	self.Datas = self.Datas[0:0:0]
+
 	self.Chain = append(self.Chain, new(BlockChain))
 	self.Chain[self.GetSize()-1] = block
 }
 
 //添加一个新交易信息
-func (self *BlockChain) NewTransaction(sender, recipient, amount string, flag bool) int {
+func (self *BlockChain) NewTransaction(sender, recipient, amount string) int {
 	self.Datas = append(self.Datas, new(Transaction))
-	data := &Transaction{sender, recipient, amount, flag}
+	data := &Transaction{sender, recipient, amount}
 	self.Datas[len(self.Datas)-1] = data
 	return self.Index + 1
 }
@@ -75,34 +77,10 @@ func (self *BlockChain) Hash() []byte {
 	return slice
 }
 
-/*
 //是否有节点挖矿
-func (self *BlockChain) CanMining() int {
-	for i := 0; i < len(self.Datas); i++ {
-		if self.Datas[i].Flag == false {
-			return i
-		}
-	}
-	return -1
+func (self *BlockChain) CanMining() bool {
+	return len(self.Datas) > 0
 }
-
-
-//移除挖走的交易数据
-func (self *BlockChain) RemoveTransaction(index int) {
-	fmt.Println("RemoveTransaction size:", len(self.Datas))
-
-	var Datas []*Transaction
-	for i := range self.Datas {
-		if i != index {
-			Datas = append(Datas, new(Transaction))
-			Datas[len(Datas)-1] = self.Datas[i]
-		}
-	}
-	self.Datas = Datas
-	fmt.Println("RemoveTransaction size:", len(self.Datas))
-	return
-}
-*/
 
 //打印所有区块信息
 func (self *BlockChain) ShowAll() {
@@ -113,9 +91,9 @@ func (self *BlockChain) ShowAll() {
 			self.Chain[i].Proof, self.Chain[i].PrevHash, len(self.Chain[i].Datas))
 
 		for j := 0; j < len(self.Chain[i].Datas); j++ {
-			fmt.Printf("[%v]Sender:%s, Recver:%s, Amount:%s ,Flag:%v",
+			fmt.Printf("[%v]Sender:%s, Recver:%s, Amount:%s ",
 				j, self.Chain[i].Datas[j].Sender, self.Chain[i].Datas[j].Recver,
-				self.Chain[i].Datas[j].Amount, self.Chain[i].Datas[j].Flag)
+				self.Chain[i].Datas[j].Amount)
 		}
 
 		fmt.Printf("\n")
