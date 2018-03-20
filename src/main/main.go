@@ -1,85 +1,88 @@
 package main
 
 import (
-	"bytes"
-	"crypto/sha256"
+	"TBC"
 	"fmt"
-	"strconv"
-	"time"
-	//"unsafe"
 )
 
-//交易数据
-type Transaction struct {
-	Sender string //发送者
-	Recver string //接收者
-	Amount string //数量
+var NodeIdentifier string = "矿工"
+
+////////////////////////////////////////////////////////////////////////////
+//新交易
+//@app.route('/transactions/new', methods=['POST'])
+func new_transaction(self *TBC.BlockChain) int {
+	//values = request.get_json()
+
+	//Check that the required fields are in the POST'ed data
+	//required = ['sender', 'recipient', 'amount']
+	//if not all(k in values for k in required):
+	//    return 'Missing values', 400
+
+	//Create a new Transaction
+	//index = blockchain.new_transaction(values['sender'], values['recipient'], values['amount'])
+
+	//response = {'message': f'Transaction will be added to Block {index}'}
+	//return jsonify(response), 201
+	return self.NewTransaction("aaa", "bbb", "10", false)
 }
 
-//区块链结构体
-type BlockChain struct {
-	Index     int64 //序列号
-	Timestamp int64 //时间戳
+//挖矿函数
+func mine(self *TBC.BlockChain) string {
+	//1、计算工作量证明
+	last_block := self.GetLastBlock()
+	proof := self.Proof_of_work()
 
-	proof    []byte //工作量证明
-	PrevHash []byte //前一个hash
+	//2、判断是否有矿可挖...
+	//mining_index := self.CanMining()
+	//if mining_index > 0 {
+	//	fmt.Println("没有可挖矿...")
+	//	return "没有可挖矿..."
+	//}
 
-	Datas []*Transaction //交易数据，可为多个
+	//3、通过一笔交易授予矿工（我们）代币，以作为奖励；
+	self.NewTransaction("系统", NodeIdentifier, "1", true)
 
-	Chain []*BlockChain //区块链列表
+	//4、创造新区块，并将其添至区块链；
+	previous_hash := last_block.Hash()
+	self.NewBlock(proof, previous_hash)
+
+	//5、移除挖走的记录
+	//self.RemoveTransaction(mining_index)
+
+	return "挖矿成功!"
 }
 
-//初始化创世区块
-func (self *BlockChain) Init() {
-	self.NewBlock([]byte(""), []byte(""))
-}
-
-//添加区块方法
-func (self *BlockChain) NewBlock(proof []byte, prevHash []byte) {
-	self.Index++
-
-	//fmt.Println(self.Index, time.Now().Unix(), proof, prevHash)
-
-	block := &BlockChain{self.Index, time.Now().Unix(), proof, prevHash, self.Datas, self.Chain}
-
-	self.Chain = append(self.Chain, new(BlockChain))
-	self.Chain[len(self.Chain)-1] = block
-}
-
-//获取整个区块链大小
-func (self *BlockChain) GetSize() int64 {
-	return int64(len(self.Chain))
-}
-
-//计算当前节点hash值
-func (self *BlockChain) Hash() []byte {
-	timestamp := []byte(strconv.FormatInt(self.Timestamp, 10))
-	headers := bytes.Join([][]byte{[]byte(self.PrevHash), timestamp, self.PrevHash}, []byte{})
-	hash := sha256.Sum256(headers)
-
-	//slice := hash[:]
-	slice := hash[:4] //简化取4位
-	return slice
-}
-
-//打印所有区块信息
-func (self *BlockChain) ShowAll() {
-	for i := 0; i < len(self.Chain); i++ {
-		fmt.Printf("Index:%v, Timestamp:%v, proof:%X, PrevHash:%X, Datas:%v\n",
-			self.Chain[i].Index, self.Chain[i].Timestamp,
-			self.Chain[i].proof, self.Chain[i].PrevHash, self.Chain[i].Datas)
-	}
-}
-
+////////////////////////////////////
+//主函数
 func main() {
-	p := new(BlockChain)
-	p.Init()
+	g_blockchain := new(TBC.BlockChain)
+	g_blockchain.Init()
 
-	fmt.Println("BlockChain size:", p.GetSize())
-	time.Sleep(time.Second * 1)
-	p.NewBlock([]byte(""), p.Hash())
-	fmt.Println("BlockChain size:", p.GetSize())
+	index := new_transaction(g_blockchain) //第一笔交易
+	fmt.Println("NewTransaction:", index)
 
-	p.ShowAll()
+	//index = new_transaction(g_blockchain) //第二笔交易
+	//fmt.Println("NewTransaction:", index)
 
+	g_blockchain.ShowAll() //打印所有节点
+
+	fmt.Println(mine(g_blockchain)) //挖矿
+	g_blockchain.ShowAll()
+
+	//index = new_transaction(g_blockchain) //第二笔交易
+	//fmt.Println("NewTransaction:", index)
+
+	fmt.Println(mine(g_blockchain)) //挖矿
+	g_blockchain.ShowAll()
+	/*
+		p := new(BlockChain)
+		p.Init()
+
+		fmt.Println("BlockChain size:", p.GetSize())
+		time.Sleep(time.Second * 1)
+		p.NewBlock([]byte(""), p.GetLastBlock().Hash())
+		fmt.Println("BlockChain size:", p.GetSize())
+
+		p.ShowAll()
+	*/
 }
