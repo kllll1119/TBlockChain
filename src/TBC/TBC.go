@@ -46,7 +46,7 @@ func (self *BlockChain) NewBlock(proof int, prevHash []byte) {
 	self.Index++
 	block := &BlockChain{self.Index, time.Now().Unix(), proof, prevHash, self.Datas, self.Chain}
 
-	//Reset the current list of transactions
+	//重置交易数据列表
 	self.Datas = self.Datas[0:0:0]
 
 	self.Chain = append(self.Chain, new(BlockChain))
@@ -108,14 +108,10 @@ func (self *BlockChain) valid_chain(chain BlockChain) bool {
 
 	for current_index < chain.GetSize() {
 		block := chain.Chain[current_index]
-		//print('{last_block}')
-		//print('{block}')
-		//print("\n-----------\n")
-		//# Check that the hash of the block is correct
 		if (string)(block.PrevHash) != (string)(self.GetLastBlock().Hash()) {
 			return false
 		}
-		//# Check that the Proof of Work is correct
+		//校验工作量合法性
 		if self.valid_proof(last_block.Proof, block.Proof, last_block.PrevHash) == false {
 			return false
 		}
@@ -126,12 +122,41 @@ func (self *BlockChain) valid_chain(chain BlockChain) bool {
 	return true
 }
 
-//基本的工作量证明
+//共识算法
+func (self *BlockChain) ResolveConflicts() bool {
+	//遍历所有我们的相邻节点，下载它们的链，并使用上述方法来验证它们。
+
+	//:return: True if our chain was replaced, False if not
+	/*
+		neighbours = self.nodes
+		var new_chain BlockChain
+
+		//We're only looking for chains longer than ours
+		max_length := self.GetSize()
+
+		   //Grab and verify the chains from all the nodes in our network
+		   for node in neighbours:
+		       response = requests.get(f'http://{node}/chain')
+
+		       if response.status_code == 200:
+		           length = response.json()['length']
+		           chain = response.json()['chain']
+
+		           //Check if the length is longer and the chain is valid
+		           if length > max_length and self.valid_chain(chain):
+		               max_length = length
+		               new_chain = chain
+
+		   //Replace our chain if we discovered a new, valid chain longer than ours
+		   if new_chain:
+		       self.chain = new_chain
+		       return true
+	*/
+	return false
+}
+
+//基本的工作量
 func (self *BlockChain) Proof_of_work() int {
-
-	// Find a number p' such that hash(pp') contains leading 4 zeroes
-	//Where p is the previous proof, and p' is the new proof
-
 	last_proof := self.GetLastBlock().Proof
 	last_hash := self.GetLastBlock().Hash()
 
@@ -146,8 +171,6 @@ func (self *BlockChain) Proof_of_work() int {
 func (self *BlockChain) valid_proof(last_proof int, proof int, last_hash []byte) bool {
 	headers := bytes.Join([][]byte{IntToBytes(last_proof), IntToBytes(proof), last_hash}, []byte{})
 	hash := sha256.Sum256(headers)
-
-	//fmt.Println(hash)
 	return (string)(hash[:1]) == "0"
 }
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 )
 
+var SysIdentifier string = "系统"
 var NodeIdentifier string = "矿工"
 
 ////////////////////////////////////////////////////////////////////////////
@@ -40,7 +41,7 @@ func mine(self *TBC.BlockChain) string {
 	}
 
 	//3、通过一笔交易授予矿工（我们）代币，以作为奖励；
-	self.NewTransaction("系统", NodeIdentifier, "1")
+	self.NewTransaction(SysIdentifier, NodeIdentifier, "1")
 
 	//4、创造新区块，并将其添至区块链；
 	previous_hash := last_block.Hash()
@@ -71,6 +72,8 @@ func main() {
 
 	fmt.Println(mine(g_blockchain)) //挖矿
 	g_blockchain.ShowAll()          //打印所有节点
+
+	fmt.Println(mine(g_blockchain)) //挖矿
 	/*
 		p := new(BlockChain)
 		p.Init()
